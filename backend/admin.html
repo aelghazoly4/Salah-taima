@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wedding Admin Dashboard</title>
+<style>
+  :root {
+    --gold: #b8863f;
+    --gold-light: #d8ae6a;
+    --cream: #f9e6d4;
+    --brown: #3a2414;
+    --brown-soft: #6b4c30;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #fffaf1;
+    color: var(--brown);
+  }
+  header {
+    background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    padding: 22px 24px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 400; letter-spacing: 1px; }
+  #logoutBtn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.6);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Login screen */
+  #loginScreen {
+    max-width: 380px;
+    margin: 80px auto;
+    background: var(--cream);
+    border: 1px solid var(--gold-light);
+    border-radius: 14px;
+    padding: 32px 28px;
+    text-align: center;
+  }
+  #loginScreen h2 { margin-top: 0; font-weight: 400; }
+  #loginScreen input {
+    width: 100%;
+    padding: 11px 13px;
+    margin: 8px 0;
+    border: 1px solid var(--gold-light);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    background: #fffaf1;
+  }
+  #loginScreen button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #loginError { color: #a33; font-size: 13px; margin-top: 10px; display: none; }
+
+  /* Dashboard */
+  main { max-width: 1000px; margin: 0 auto; padding: 24px; display: none; }
+  .tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+  .tab-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--gold-light);
+    background: #fff;
+    color: var(--brown-soft);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .tab-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .summary { display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .stat-card {
+    background: var(--cream);
+    border: 1px solid var(--gold-light);
+    border-radius: 10px;
+    padding: 14px 20px;
+    min-width: 140px;
+  }
+  .stat-card .num { font-size: 26px; font-weight: bold; color: var(--gold); }
+  .stat-card .label { font-size: 12px; color: var(--brown-soft); text-transform: uppercase; letter-spacing: 1px; }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--gold-light); border-radius: 10px; overflow: hidden; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #f0e1c8; font-size: 14px; }
+  th { background: var(--cream); color: var(--brown-soft); text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+  tr:last-child td { border-bottom: none; }
+  .empty { text-align: center; padding: 30px; color: var(--brown-soft); }
+  .refresh-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .refresh-row button {
+    padding: 8px 16px; border-radius: 8px; border: 1px solid var(--gold-light);
+    background: #fff; cursor: pointer; font-family: inherit; color: var(--brown-soft);
+  }
+  .status-in { color: #2a7a2a; font-weight: bold; }
+  .status-out { color: #999; }
+</style>
+</head>
+<body>
+
+  <div id="loginScreen">
+    <h2>Admin Login</h2>
+    <input type="text" id="apiBaseInput" placeholder="Backend URL, e.g. https://your-project.vercel.app">
+    <input type="password" id="passwordInput" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <div id="loginError">Wrong password or backend URL. Please check and try again.</div>
+  </div>
+
+  <header id="dashHeader" style="display:none;">
+    <h1>💍 Wedding Admin Dashboard</h1>
+    <button id="logoutBtn">Log out</button>
+  </header>
+
+  <main id="dashMain">
+    <div class="summary" id="summaryCards"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="rsvp">RSVP Messages</button>
+      <button class="tab-btn" data-tab="visits">Visitors (In / Out)</button>
+    </div>
+
+    <div class="refresh-row"><button id="refreshBtn">↻ Refresh</button></div>
+
+    <div class="panel active" id="panel-rsvp">
+      <table>
+        <thead><tr><th>Name</th><th>Message</th><th>Sent At</th></tr></thead>
+        <tbody id="rsvpBody"></tbody>
+      </table>
+      <div class="empty" id="rsvpEmpty" style="display:none;">No RSVP messages yet.</div>
+    </div>
+
+    <div class="panel" id="panel-visits">
+      <table>
+        <thead><tr><th>Session</th><th>Entered At</th><th>Left At</th><th>Status</th></tr></thead>
+        <tbody id="visitsBody"></tbody>
+      </table>
+      <div class="empty" id="visitsEmpty" style="display:none;">No visits recorded yet.</div>
+    </div>
+  </main>
+
+<script>
+(function() {
+  var apiBaseInput = document.getElementById('apiBaseInput');
+  var passwordInput = document.getElementById('passwordInput');
+  var loginBtn = document.getElementById('loginBtn');
+  var loginError = document.getElementById('loginError');
+  var loginScreen = document.getElementById('loginScreen');
+  var dashHeader = document.getElementById('dashHeader');
+  var dashMain = document.getElementById('dashMain');
+  var logoutBtn = document.getElementById('logoutBtn');
+  var refreshBtn = document.getElementById('refreshBtn');
+
+  apiBaseInput.value = localStorage.getItem('admin_api_base') || '';
+
+  function apiBase() { return (apiBaseInput.value || '').trim().replace(/\/$/, ''); }
+
+  function showDashboard() {
+    loginScreen.style.display = 'none';
+    dashHeader.style.display = 'flex';
+    dashMain.style.display = 'block';
+    loadAll();
+  }
+
+  loginBtn.addEventListener('click', function() {
+    var base = apiBase();
+    var pass = passwordInput.value;
+    if (!base || !pass) { return; }
+    loginError.style.display = 'none';
+
+    fetch(base + '/api/admin-login', {
+      method: 'POST',
+      headers: { 'x-admin-password': pass }
+    }).then(function(r) {
+      if (!r.ok) throw new Error('unauthorized');
+      return r.json();
+    }).then(function() {
+      localStorage.setItem('admin_api_base', base);
+      sessionStorage.setItem('admin_password', pass);
+      showDashboard();
+    }).catch(function() {
+      loginError.style.display = 'block';
+    });
+  });
+
+  logoutBtn.addEventListener('click', function() {
+    sessionStorage.removeItem('admin_password');
+    location.reload();
+  });
+
+  refreshBtn.addEventListener('click', loadAll);
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function authHeaders() {
+    return { 'x-admin-password': sessionStorage.getItem('admin_password') || '' };
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleString();
+  }
+
+  function loadAll() {
+    loadRsvps();
+    loadVisits();
+  }
+
+  function loadRsvps() {
+    fetch(apiBase() + '/api/rsvp', { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var items = data.items || [];
+        var body = document.getElementById('rsvpBody');
+        var empty = document.getElementById('rsvpEmpty');
+        body.innerHTML = '';
+        empty.style.display = items.length ? 'none' : 'block';
+        items.forEach(function(it) {
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + escapeHtml(it.name) + '</td>' +
+                          '<td>' + escapeHtml(it.message) + '</td>' +
+                          '<td>' + fmtDate(it.createdAt) + '</td>';
+          body.appendChild(tr);
+        });
+        updateSummary(items.length, null);
+      });
+  }
+
+  function loadVisits() {
+    fetch(apiBase() + '/api/visits', { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var items = data.items || [];
+        var body = document.getElementById('visitsBody');
+        var empty = document.getElementById('visitsEmpty');
+        body.innerHTML = '';
+        empty.style.display = items.length ? 'none' : 'block';
+        var currentlyIn = 0;
+        items.forEach(function(it) {
+          var inNow = !it.leftAt;
+          if (inNow) currentlyIn++;
+          var tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + escapeHtml((it.sessionId || '').slice(0, 8)) + '</td>' +
+                          '<td>' + fmtDate(it.enteredAt) + '</td>' +
+                          '<td>' + fmtDate(it.leftAt) + '</td>' +
+                          '<td class="' + (inNow ? 'status-in' : 'status-out') + '">' + (inNow ? 'On site' : 'Left') + '</td>';
+          body.appendChild(tr);
+        });
+        updateSummary(null, { total: items.length, in: currentlyIn });
+      });
+  }
+
+  var rsvpCount = 0, visitStats = { total: 0, in: 0 };
+  function updateSummary(rc, vs) {
+    if (rc !== null) rsvpCount = rc;
+    if (vs) visitStats = vs;
+    document.getElementById('summaryCards').innerHTML =
+      '<div class="stat-card"><div class="num">' + rsvpCount + '</div><div class="label">RSVP Messages</div></div>' +
+      '<div class="stat-card"><div class="num">' + visitStats.total + '</div><div class="label">Total Visits</div></div>' +
+      '<div class="stat-card"><div class="num">' + visitStats.in + '</div><div class="label">Currently On Site</div></div>';
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // auto-login if we already have a session password (e.g. after refresh)
+  if (sessionStorage.getItem('admin_password') && apiBaseInput.value) {
+    showDashboard();
+  }
+})();
+</script>
+</body>
+</html>
