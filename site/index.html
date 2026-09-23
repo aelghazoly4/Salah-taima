@@ -5806,7 +5806,7 @@
                             btn.disabled = true;
                             status.className = '';
                             status.textContent = msgs.sending[lang];
-                            fetch('https://salah-taima-5f24.vercel.app', {
+                            fetch('https://salah-taima-5f24.vercel.app/api/rsvp', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ name: name, message: message })
