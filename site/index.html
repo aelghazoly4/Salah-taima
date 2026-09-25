@@ -5706,8 +5706,11 @@
                 font-weight: 400;
                 margin: 6px 0;
             }
-            body.lang-ar #lt-amp {
+            #lt-amp {
                 display: none !important;
+            }
+            body:not(.lang-ar) #lt-names {
+                transform: translateY(-25px);
             }
             body.lang-ar #lt-tl-1,
             body.lang-ar #lt-tl-2,
@@ -5727,7 +5730,7 @@
             (function () {
                 var translations = {
                     'lt-tap-open': { en: 'Tap to Open', ar: 'اضغط للفتح' },
-                    'lt-names': { en: 'Saleh<br><br><br>Taima', ar: 'صالح <span class="lt-waw">و</span>تيما' },
+                    'lt-names': { en: '<span style="display:block;">Saleh</span><span style="display:block;font-size:20px;line-height:1;margin:-6px 0;color:#866739;">&amp;</span><span style="display:block;">Taima</span>', ar: 'صالح <span class="lt-waw">و</span>تيما' },
                     'lt-date': { en: '28 December 2026', ar: '28 ديسمبر 2026' },
                     'lt-time': { en: 'at 6:00 PM', ar: 'الساعة 6:00 مساءً' },
                     'lt-countdown-title': { en: 'The Celebration Begins', ar: 'بداية الاحتفال' },
