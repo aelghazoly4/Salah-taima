@@ -143,7 +143,7 @@
 
     <div class="panel active" id="panel-rsvp">
       <table>
-        <thead><tr><th>Name</th><th>Message</th><th>Sent At</th></tr></thead>
+        <thead><tr><th>Name</th><th>People</th><th>Attending</th><th>Sent At</th></tr></thead>
         <tbody id="rsvpBody"></tbody>
       </table>
       <div class="empty" id="rsvpEmpty" style="display:none;">No RSVP messages yet.</div>
@@ -243,14 +243,18 @@
         var empty = document.getElementById('rsvpEmpty');
         body.innerHTML = '';
         empty.style.display = items.length ? 'none' : 'block';
+        var totalPeople = 0;
         items.forEach(function(it) {
+          if (it.attending === 'yes') totalPeople += (it.peopleCount || 0);
+          var attendLabel = it.attending === 'yes' ? 'Yes' : (it.attending === 'no' ? 'No' : '—');
           var tr = document.createElement('tr');
           tr.innerHTML = '<td>' + escapeHtml(it.name) + '</td>' +
-                          '<td>' + escapeHtml(it.message) + '</td>' +
+                          '<td>' + escapeHtml(it.peopleCount) + '</td>' +
+                          '<td class="' + (it.attending === 'yes' ? 'status-in' : 'status-out') + '">' + attendLabel + '</td>' +
                           '<td>' + fmtDate(it.createdAt) + '</td>';
           body.appendChild(tr);
         });
-        updateSummary(items.length, null);
+        updateSummary(items.length, null, totalPeople);
       });
   }
 
@@ -278,12 +282,14 @@
       });
   }
 
-  var rsvpCount = 0, visitStats = { total: 0, in: 0 };
-  function updateSummary(rc, vs) {
+  var rsvpCount = 0, visitStats = { total: 0, in: 0 }, confirmedGuests = 0;
+  function updateSummary(rc, vs, guests) {
     if (rc !== null) rsvpCount = rc;
     if (vs) visitStats = vs;
+    if (guests !== undefined && guests !== null) confirmedGuests = guests;
     document.getElementById('summaryCards').innerHTML =
-      '<div class="stat-card"><div class="num">' + rsvpCount + '</div><div class="label">RSVP Messages</div></div>' +
+      '<div class="stat-card"><div class="num">' + rsvpCount + '</div><div class="label">RSVP Responses</div></div>' +
+      '<div class="stat-card"><div class="num">' + confirmedGuests + '</div><div class="label">Confirmed Guests</div></div>' +
       '<div class="stat-card"><div class="num">' + visitStats.total + '</div><div class="label">Total Visits</div></div>' +
       '<div class="stat-card"><div class="num">' + visitStats.in + '</div><div class="label">Currently On Site</div></div>';
   }

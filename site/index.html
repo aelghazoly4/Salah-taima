@@ -4406,8 +4406,19 @@
                     <form id="rsvpForm" autocomplete="off">
                         <label for="rsvpName" id="lt-rsvp-name-label">Name</label>
                         <input type="text" id="rsvpName" name="name" required>
-                        <label for="rsvpMessage" id="lt-rsvp-message-label">Message</label>
-                        <textarea id="rsvpMessage" name="message" rows="3" required></textarea>
+                        <label for="rsvpPeopleCount" id="lt-rsvp-people-label">Number of People</label>
+                        <input type="number" id="rsvpPeopleCount" name="peopleCount" min="1" max="20" step="1" inputmode="numeric" required>
+                        <fieldset id="rsvpAttendingField">
+                            <legend id="lt-rsvp-attending-label">Will You Be Present?</legend>
+                            <label class="rsvp-radio-option">
+                                <input type="radio" name="attending" value="yes" required>
+                                <span id="lt-rsvp-attend-yes">Yes, I will be present</span>
+                            </label>
+                            <label class="rsvp-radio-option">
+                                <input type="radio" name="attending" value="no" required>
+                                <span id="lt-rsvp-attend-no">Sorry, I will not be able to attend</span>
+                            </label>
+                        </fieldset>
                         <button type="submit" id="rsvpSubmitBtn"><span id="lt-rsvp-submit">Submit</span></button>
                         <p id="rsvpStatus" role="status" aria-live="polite"></p>
                     </form>
@@ -4462,6 +4473,36 @@
                         border-color: #b8863f;
                         box-shadow: 0 0 0 3px rgba(184,134,63,0.15);
                     }
+                    #rsvpAttendingField {
+                        border: 1px solid #ac9778;
+                        border-radius: 5px;
+                        padding: 14px 14px 16px;
+                        margin: 0;
+                    }
+                    #rsvpAttendingField legend {
+                        padding: 0 6px;
+                        font-size: 14px;
+                        letter-spacing: .5px;
+                        color: #6b4c30;
+                    }
+                    .rsvp-radio-option {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        font-size: 15px;
+                        color: #2a2a2a;
+                        padding: 8px 2px;
+                        cursor: pointer;
+                        margin: 0 !important;
+                    }
+                    .rsvp-radio-option input[type="radio"] {
+                        width: 18px;
+                        height: 18px;
+                        accent-color: #b8863f;
+                        cursor: pointer;
+                        flex-shrink: 0;
+                    }
+                    body.lang-ar .rsvp-radio-option { flex-direction: row-reverse; justify-content: flex-end; }
                     #rsvpSubmitBtn {
                         margin-top: 4px;
                         align-self: center;
@@ -4581,8 +4622,10 @@
                         form.addEventListener('submit', function (e) {
                             e.preventDefault();
                             var name = document.getElementById('rsvpName').value.trim();
-                            var message = document.getElementById('rsvpMessage').value.trim();
-                            if (!name || !message) return;
+                            var peopleCount = parseInt(document.getElementById('rsvpPeopleCount').value, 10);
+                            var attendingEl = form.querySelector('input[name="attending"]:checked');
+                            var attending = attendingEl ? attendingEl.value : '';
+                            if (!name || !peopleCount || peopleCount < 1 || !attending) return;
                             var base = (window.WEDDING_API_BASE || '').replace(/\/$/, '');
                             var lang = currentLang();
                             btn.disabled = true;
@@ -4591,7 +4634,7 @@
                             fetch('https://salah-taima-5f24.vercel.app/api/rsvp', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ name: name, message: message })
+                                body: JSON.stringify({ name: name, peopleCount: peopleCount, attending: attending })
                             }).then(function (res) {
                                 if (!res.ok) throw new Error('bad status');
                                 status.textContent = '';
@@ -5743,7 +5786,10 @@
                     'lt-venue-title': { en: 'Venue', ar: 'المكان' },
                     'lt-rsvp-title': { en: 'Confirm Your Presence', ar: 'تأكيد الحضور' },
                     'lt-rsvp-name-label': { en: 'Name', ar: 'الاسم' },
-                    'lt-rsvp-message-label': { en: 'Message', ar: 'رسالتك' },
+                    'lt-rsvp-people-label': { en: 'Number of People', ar: 'عدد الأشخاص' },
+                    'lt-rsvp-attending-label': { en: 'Will You Be Present?', ar: 'هل ستكون حاضرًا؟' },
+                    'lt-rsvp-attend-yes': { en: 'Yes, I will be present', ar: 'نعم، سأكون حاضرًا' },
+                    'lt-rsvp-attend-no': { en: 'Sorry, I will not be able to attend', ar: 'عذرًا، لن أتمكن من الحضور' },
                     'lt-rsvp-submit': { en: 'Submit', ar: 'إرسال' },
                     'lt-maps-title': { en: 'Directions', ar: 'الموقع على الخريطة' },
                     'lt-welcome': { en: 'We look forward to welcoming you', ar: 'يسعدنا استقبالكم' }

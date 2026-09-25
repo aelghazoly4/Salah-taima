@@ -9,13 +9,16 @@ module.exports = async function handler(req, res) {
     const col = db.collection('rsvps');
 
     if (req.method === 'POST') {
-      const { name, message } = req.body || {};
-      if (!name || !message || String(name).trim() === '' || String(message).trim() === '') {
-        return res.status(400).json({ error: 'name and message are required' });
+      const { name, peopleCount, attending } = req.body || {};
+      const count = parseInt(peopleCount, 10);
+      const validAttending = attending === 'yes' || attending === 'no';
+      if (!name || String(name).trim() === '' || !Number.isInteger(count) || count < 1 || !validAttending) {
+        return res.status(400).json({ error: 'name, peopleCount and attending (yes/no) are required' });
       }
       const doc = {
         name: String(name).trim().slice(0, 80),
-        message: String(message).trim().slice(0, 500),
+        peopleCount: Math.min(count, 50),
+        attending: attending,
         createdAt: new Date(),
       };
       const result = await col.insertOne(doc);
